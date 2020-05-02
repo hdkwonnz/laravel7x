@@ -1,0 +1,89 @@
+- sanctum(airlock) : SPA athentication by Airlock(Sanctum)
+  laravel에 pre installed vue js로 작성되었다.
+  https://medium.com/@godilite/using-laravel-airlock-with-vuejs-1d343ee6f10  ==> sample 코드
+  https://www.youtube.com/watch?v=D9oIu6jiYLk  ==> arilock Andre
+  https://www.youtube.com/watch?v=LELn-3ZpH9I ==> bitfumes 강좌
+  https://www.youtube.com/watch?v=212rM2PtGSM ==> 한국어 강좌
+  laravel.com 참조 할 것
+  composer create-project --prefer-dist laravel/laravel laravel7x
+  cd laravel7x *************중요...
+  yarn install --no-bin-links
+  yarn add bootstrap jquery popper.js vue vue-router --save
+  composer require laravel/sanctum
+  composer require laravel/ui
+  php artisan ui vue --auth
+  php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+  edit .env file => data base...
+  php artisan make:controller UserController ////
+  php artisan make:model Task -mc ////
+  This will create three files: Task.php, TaskController.php and 2020_02_28_054834_create_tasks_table.php ////
+  php artisan migrate
+  app/Http/Kernel.php file: ==> add below
+  use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+  'api' => [
+      EnsureFrontendRequestsAreStateful::class,
+      'throttle:60,1',
+      \Illuminate\Routing\Middleware\SubstituteBindings::class,
+   ],
+  config/cors.php
+   'supports_credentials' => false, ==> 'supports_credentials' => true,
+  resources/js/bootstrap.js ==> add below ???????
+  axios.defaults.withCredentials = true;
+  config/session.php ==> change below 보류 ???? ==> https://www.youtube.com/watch?v=D9oIu6jiYLk => 시간 10:10
+  'domain' => env('SESSION_DOMAIN', null), ==> .env file에 삽입 ==> 보류
+  SESSION_DOMAIN=.laravel7x.test ==> 보류
+  config/sanctum.php ==> change below ==> https://www.youtube.com/watch?v=D9oIu6jiYLk
+  'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', 'localhost,127.0.0.1')), ==>
+  'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', 'laravel7x.test')), OR .env file에 삽입
+  config/cors.php ==> change below
+  'paths' => ['api/*'], ==> 'paths' => ['api/*', 'sanctum/csrf-cookie'],
+  https://medium.com/@godilite/using-laravel-airlock-with-vuejs-1d343ee6f10 ==> below code
+  Next, let’s edit the webpack.mix.js file so it compiles our assets. Just after the first line, add this:
+  mix.webpackConfig({
+     resolve:{
+       extensions:[‘.js’,’.vue’],
+         alias:{
+           ‘@’:__dirname + ‘/resources’
+        }
+     }
+  });
+  Airlock(Sanctum)으로 authentication 만들기
+    https://www.youtube.com/watch?v=Wd646u2Sikg&list=PLzz9vf6075V1oNIpovX38TvLEXPAWCjwQ&index=2 ===> 참조할 것
+    app/Http/Controller/ApiAuth folder 추가
+    해당 controller 추가. 일부 콘트롤러는 app/Http/Controller/Auth folder에서 카피 후 수정
+    ForgotPasswordController 수정
+    ResetPasswordController 수정
+    routes/api.php에 해당 경로 추가
+    User.php  => add below and modify
+    /**
+    * Send the password reset notification.
+    *
+    * @param  string  $token
+    * @return void
+    */
+     public function sendPasswordResetNotification($token)
+     {
+        $this->notify(new ResetPasswordNotification($token)); ==> change notification name
+     }
+    php artisan make:notification PasswordResetNotification
+    app/Notification/PasswordResetNotification.php 수정
+    https://www.youtube.com/watch?v=PepvxTzdbCA&list=PLZzSdj89sCN0IRcwT4lJWg_qgfBFmcF6A&index=4 ==> vue router 설명
+    email verification(must verify) 사용
+    https://www.youtube.com/watch?v=Qjs4UqPDbuU&list=PLzz9vf6075V1oNIpovX38TvLEXPAWCjwQ&index=4 ==> email verification
+    ConfirmPasswordController 사용 ==> 내가 직접 수정했음
+    config/auth.php ==> 'password_timeout' => 10800, ==> 변경할 수 있다. 10800은 초를 의미한다.
+  ACL 사용하기(laravel의 gate를 기반으로)
+    https://www.youtube.com/watch?v=viX260pOmVE&list=PLB4AdipoHpxaHDLIaMdtro1eXnQtl_UvE&index=42 ==> Code inspire
+    User.php, migration file  에 role column 추가,
+    browser에서 phpmyadmin.test 로 들어가 해당 db의 users table 과  magrations table의 users column을 삭제후 php artisan migrate
+    ApiAuth/RegisterController에 role column 추가
+    laravel.com => security/authorization/Gate 참조
+    App\Providers\AuthServiceProvider => gate 사항 추가
+    views/layouts/app.balde.php의 해당 menu에 @can('isAdmin') -------@endcan을 설정한다.(여기서는 SPA를 사용하는 관계로 해당 않됨)
+    laravel.com => security/authorization/Authorization Actions Using Polices/Via Contoller Helper 참조
+    원하는 Controller function에 authorize 추가(현재는 TaskController addTask function에 추가 했음) => ACL 적용
+    frontend(vue) ACL을 위하여 resources/js/gate.js 을 만든다.
+    resources/js/app.js 에 해당 사항 추가한다.
+    resources/views/entryView/index.blade.php에 해당사항 추가.
+    해당 vue 에 적용한다.(여기서는 Dashboard.vue)
+
